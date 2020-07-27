@@ -21,6 +21,7 @@ func init() {
 // unique request ID to response headers.
 type RequestID struct {
 	// The name of the header to write to.
+	// Defaults to "x-request-id"
 	Header string `json:"header,omitempty"`
 
 	h string

@@ -13,13 +13,13 @@ import (
 )
 
 func init() {
-	caddy.RegisterModule(Middleware{})
+	caddy.RegisterModule(RequestID{})
 	httpcaddyfile.RegisterHandlerDirective("request_id", parseCaddyfile)
 }
 
-// Middleware implements an HTTP handler that writes a
+// RequestID implements an HTTP handler that writes a
 // unique request ID to response headers.
-type Middleware struct {
+type RequestID struct {
 	// The name of the header to write to.
 	Header string `json:"header,omitempty"`
 
@@ -27,15 +27,15 @@ type Middleware struct {
 }
 
 // CaddyModule returns the Caddy module information.
-func (Middleware) CaddyModule() caddy.ModuleInfo {
+func (RequestID) CaddyModule() caddy.ModuleInfo {
 	return caddy.ModuleInfo{
 		ID:  "http.handlers.request_id",
-		New: func() caddy.Module { return new(Middleware) },
+		New: func() caddy.Module { return new(RequestID) },
 	}
 }
 
 // Provision implements caddy.Provisioner.
-func (m *Middleware) Provision(ctx caddy.Context) error {
+func (m *RequestID) Provision(ctx caddy.Context) error {
 	m.h = m.Header
 
 	if m.h == "" {
@@ -46,7 +46,7 @@ func (m *Middleware) Provision(ctx caddy.Context) error {
 }
 
 // Validate implements caddy.Validator.
-func (m *Middleware) Validate() error {
+func (m *RequestID) Validate() error {
 	if m.h == "" {
 		return fmt.Errorf("no header")
 	}
@@ -55,7 +55,7 @@ func (m *Middleware) Validate() error {
 }
 
 // ServeHTTP implements caddyhttp.MiddlewareHandler.
-func (m Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp.Handler) error {
+func (m RequestID) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp.Handler) error {
 	uid := uuid.New().String()
 	w.Header().Set(m.h, strings.ReplaceAll(uid, "-", ""))
 
@@ -63,7 +63,7 @@ func (m Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddy
 }
 
 // UnmarshalCaddyfile implements caddyfile.Unmarshaler.
-func (m *Middleware) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
+func (m *RequestID) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
 	for d.Next() {
 		if d.NextArg() {
 			// optional arg
@@ -81,7 +81,7 @@ func (m *Middleware) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
 
 // parseCaddyfile unmarshals tokens from h into a new Middleware.
 func parseCaddyfile(h httpcaddyfile.Helper) (caddyhttp.MiddlewareHandler, error) {
-	var m Middleware
+	var m RequestID
 	err := m.UnmarshalCaddyfile(h.Dispenser)
 
 	return m, err
@@ -89,8 +89,8 @@ func parseCaddyfile(h httpcaddyfile.Helper) (caddyhttp.MiddlewareHandler, error)
 
 // Interface guards
 var (
-	_ caddy.Provisioner           = (*Middleware)(nil)
-	_ caddy.Validator             = (*Middleware)(nil)
-	_ caddyhttp.MiddlewareHandler = (*Middleware)(nil)
-	_ caddyfile.Unmarshaler       = (*Middleware)(nil)
+	_ caddy.Provisioner           = (*RequestID)(nil)
+	_ caddy.Validator             = (*RequestID)(nil)
+	_ caddyhttp.MiddlewareHandler = (*RequestID)(nil)
+	_ caddyfile.Unmarshaler       = (*RequestID)(nil)
 )

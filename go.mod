@@ -1,4 +1,4 @@
-module github.com/lolPants/caddy-reqid
+module github.com/lolPants/caddy-requestid
 
 go 1.14
 

@@ -1,4 +1,4 @@
-package reqid
+package requestid
 
 import (
 	"fmt"

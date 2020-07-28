@@ -1,7 +1,6 @@
 package requestid
 
 import (
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -23,8 +22,6 @@ type RequestID struct {
 	// The name of the header to write to.
 	// Defaults to "x-request-id"
 	Header string `json:"header,omitempty"`
-
-	h string
 }
 
 // CaddyModule returns the Caddy module information.
@@ -37,19 +34,8 @@ func (RequestID) CaddyModule() caddy.ModuleInfo {
 
 // Provision implements caddy.Provisioner.
 func (m *RequestID) Provision(ctx caddy.Context) error {
-	m.h = m.Header
-
-	if m.h == "" {
-		m.h = "x-request-id"
-	}
-
-	return nil
-}
-
-// Validate implements caddy.Validator.
-func (m *RequestID) Validate() error {
-	if m.h == "" {
-		return fmt.Errorf("no header")
+	if m.Header == "" {
+		m.Header = "x-request-id"
 	}
 
 	return nil
@@ -58,22 +44,42 @@ func (m *RequestID) Validate() error {
 // ServeHTTP implements caddyhttp.MiddlewareHandler.
 func (m RequestID) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp.Handler) error {
 	uid := uuid.New().String()
-	w.Header().Set(m.h, strings.ReplaceAll(uid, "-", ""))
+	w.Header().Set(m.Header, strings.ReplaceAll(uid, "-", ""))
 
 	return next.ServeHTTP(w, r)
 }
 
-// UnmarshalCaddyfile implements caddyfile.Unmarshaler.
+// UnmarshalCaddyfile sets up the handler from Caddyfile tokens. Syntax:
+//
+//     request_id [<matcher>] [<header>] {
+//         header <text>
+//     }
+//
 func (m *RequestID) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
 	for d.Next() {
-		if d.NextArg() {
-			// optional arg
-			m.Header = d.Val()
+		args := d.RemainingArgs()
+		switch len(args) {
+		case 0:
+			break
+
+		case 1:
+			m.Header = args[0]
+
+		default:
+			return d.ArgErr()
 		}
 
-		if d.NextArg() {
-			// too many args
-			return d.ArgErr()
+		for d.NextBlock(1) {
+			switch d.Val() {
+			case "header":
+				if m.Header != "" {
+					return d.Err("header already specified")
+				}
+
+				if !d.AllArgs(&m.Header) {
+					return d.ArgErr()
+				}
+			}
 		}
 	}
 
@@ -91,7 +97,6 @@ func parseCaddyfile(h httpcaddyfile.Helper) (caddyhttp.MiddlewareHandler, error)
 // Interface guards
 var (
 	_ caddy.Provisioner           = (*RequestID)(nil)
-	_ caddy.Validator             = (*RequestID)(nil)
 	_ caddyhttp.MiddlewareHandler = (*RequestID)(nil)
 	_ caddyfile.Unmarshaler       = (*RequestID)(nil)
 )

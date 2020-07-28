@@ -15,7 +15,7 @@ request_id [<matcher>] [<header>] {
 ```
 # Required to use in top-level blocks
 {
-  order request_id before respond
+  order request_id before handle
 }
 
 localhost {

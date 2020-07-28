@@ -83,21 +83,25 @@ func (m *RequestID) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
 			return d.ArgErr()
 		}
 
-		for d.NextBlock(1) {
+		for d.NextBlock(0) {
 			switch d.Val() {
 			case "header":
 				if m.Header != "" {
 					return d.Err("header already specified")
 				}
 
-				if !d.AllArgs(&m.Header) {
+				if !d.NextArg() {
 					return d.ArgErr()
 				}
 
+				m.Header = d.Val()
+
 			case "template":
-				if !d.AllArgs(&m.Template) {
+				if !d.NextArg() {
 					return d.ArgErr()
 				}
+
+				m.Template = d.Val()
 
 			default:
 				return d.Errf("unrecognized subdirective %s", d.Val())

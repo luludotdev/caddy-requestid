@@ -22,6 +22,10 @@ type RequestID struct {
 	// The name of the header to write to.
 	// Defaults to "x-request-id"
 	Header string `json:"header,omitempty"`
+
+	// Template string used to generate the request ID
+	// Defaults to "{uid}"
+	Template string `json:"template,omitempty"`
 }
 
 // CaddyModule returns the Caddy module information.
@@ -38,13 +42,22 @@ func (m *RequestID) Provision(ctx caddy.Context) error {
 		m.Header = "x-request-id"
 	}
 
+	if m.Template == "" {
+		m.Template = "{uid}"
+	}
+
 	return nil
 }
 
 // ServeHTTP implements caddyhttp.MiddlewareHandler.
 func (m RequestID) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp.Handler) error {
-	uid := uuid.New().String()
-	w.Header().Set(m.Header, strings.ReplaceAll(uid, "-", ""))
+	repl := r.Context().Value(caddy.ReplacerCtxKey).(*caddy.Replacer)
+
+	uid := strings.ReplaceAll(uuid.New().String(), "-", "")
+	repl.Set("uid", uid)
+
+	value := repl.ReplaceAll(m.Template, "")
+	w.Header().Set(m.Header, value)
 
 	return next.ServeHTTP(w, r)
 }
@@ -53,6 +66,7 @@ func (m RequestID) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyh
 //
 //     request_id [<matcher>] [<header>] {
 //         header <text>
+//         template <text>
 //     }
 //
 func (m *RequestID) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
@@ -79,6 +93,14 @@ func (m *RequestID) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
 				if !d.AllArgs(&m.Header) {
 					return d.ArgErr()
 				}
+
+			case "template":
+				if !d.AllArgs(&m.Template) {
+					return d.ArgErr()
+				}
+
+			default:
+				return d.Errf("unrecognized subdirective %s", d.Val())
 			}
 		}
 	}

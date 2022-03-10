@@ -19,7 +19,7 @@ If you wish to use the directive in a top level block, you must explicitly defin
 }
 ```
 
-### With JSON Config
+### JSON Config
 ```json5
 {
   "handler": "request_id",
@@ -34,7 +34,7 @@ If you wish to use the directive in a top level block, you must explicitly defin
 The top level request ID will be set in the `{http.request_id}` placeholder. Any additional IDs will be set in the `{http.request_id.<key>}` placeholder.
 
 ## Example
-The following example Caddyfile a different request ID for response bodies and headers.
+The following example Caddyfile sets a different request ID for response bodies and headers.
 ```
 {
   order request_id before header

@@ -2,13 +2,12 @@ package requestid
 
 import (
 	"net/http"
-	"strings"
 
 	"github.com/caddyserver/caddy/v2"
 	"github.com/caddyserver/caddy/v2/caddyconfig/caddyfile"
 	"github.com/caddyserver/caddy/v2/caddyconfig/httpcaddyfile"
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
-	"github.com/google/uuid"
+	nanoid "github.com/matoous/go-nanoid/v2"
 )
 
 func init() {
@@ -32,8 +31,8 @@ func (RequestID) CaddyModule() caddy.ModuleInfo {
 func (m RequestID) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp.Handler) error {
 	repl := r.Context().Value(caddy.ReplacerCtxKey).(*caddy.Replacer)
 
-	uid := strings.ReplaceAll(uuid.New().String(), "-", "")
-	repl.Set("http.request_id", uid)
+	id := nanoid.Must()
+	repl.Set("http.request_id", id)
 
 	return next.ServeHTTP(w, r)
 }

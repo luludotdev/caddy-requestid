@@ -1,9 +1,16 @@
-# Caddy RequestID
-> Caddy v2 Module that sets a unique request ID placeholder.
+# Caddy Request ID
+> Caddy v2 Module that sets unique request ID placeholders.
 
 ## Usage
-### With a Caddyfile
-Usage with a Caddyfile is fairly straightforward. Simply add the `request_id` directive to a handler block, and the `{http.request_id}` template will be set.
+### Caddyfile
+```
+request_id [<length>] {
+  [<key> <length>]
+  ...
+}
+```
+* **length** - length of ID to generate, defaults to 21
+* **key, length** - additional keys to generate independent IDs for
 
 If you wish to use the directive in a top level block, you must explicitly define the order.
 ```
@@ -13,24 +20,33 @@ If you wish to use the directive in a top level block, you must explicitly defin
 ```
 
 ### With JSON Config
-In the JSON Config, all you need to do is add the `request_id` hander to your `handle[]` chain. The same template as documented above will be set. Note that you must set this before any handlers that you want to use the template in.
-```json
+```json5
 {
-  "handler": "request_id"
+  "handler": "request_id",
+  "length": 21, // optional
+  "additional": { // optional
+    "header": 21,
+  }
 }
 ```
 
-### Example
-The following example Caddyfile sets the `x-request-id` header for all responses.
+### Placeholders
+The top level request ID will be set in the `{http.request_id}` placeholder. Any additional IDs will be set in the `{http.request_id.<key>}` placeholder.
+
+## Example
+The following example Caddyfile a different request ID for response bodies and headers.
 ```
 {
   order request_id before header
 }
 
 localhost {
-  request_id
+  request_id {
+    body 10
+    header 21
+  }
 
-  header * x-request-id "{http.request_id}"
-  respond * "{http.request_id}" 200
+  header * x-request-id "{http.request_id.header}"
+  respond * "{http.request_id.body}" 200
 }
 ```
